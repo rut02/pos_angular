@@ -1,0 +1,79 @@
+
+<div class="max-w-4xl mx-auto p-6">
+    <div class="header mb-6 flex justify-between items-center">
+      <h2 class="text-2xl font-semibold text-gray-800">Tables</h2>
+
+    </div>
+<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table s class="w-full text-xl text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <thead class="text-xl text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+                <th scope="col" class="px-6 py-3">
+                    Table
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Capacity
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Status
+                </th>
+                <th scope="col" class="px-6 py-3">
+                <button type="button"(click)="openAddPopup()" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xl px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let table of tables; let i = index"class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <!-- <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    Apple MacBook Pro 17"
+                </th> -->
+                <td class="px-6 py-4">
+                    {{ table.name }}
+                </td>
+                <td class="px-6 py-4">
+                    {{ table.capacity }}
+                </td>
+                <td class="px-6 py-4 text xl">
+                    {{ table.status_name }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <button type="button"(click)="openEditPopup(i)" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-xl px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">Edit</button>
+                    <button type="button" (click)="deleteTable(i)" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xl px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Delete</button>
+                    <!-- <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> -->
+                </td>
+            </tr>
+
+        </tbody>  
+    </table>
+    <div *ngIf="showPopup" class="popup fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+      <div class="popup-content bg-white rounded-lg p-6 w-96"style="width: 80vh; overflow-y: auto;">
+        <h3 class="text-xl font-semibold mb-4">{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h3>
+        <form (ngSubmit)="isEditMode ? updateTable() : addTable()">
+          <div class="mb-4">
+            <label for="productName" class="block text-gray-700">Table Name</label>
+            <input type="text" id="productName" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentTable.name" name="tableName" required>
+          </div>
+          <div class="mb-4">
+            <label for="price" class="block text-gray-700">
+                Capacity
+            </label>
+            <input type="number" id="price" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentTable.capacity" name="price" required>
+          </div>
+          <div class="mb-4">
+            <label for="category" class="block text-gray-700">Statuss</label>
+            <select id="category" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentTable.status_master_id" name="tableName" required>
+              <option *ngFor="let status of statuses" [value]="status.id">{{ status.name }}</option>
+            </select>
+          </div>
+          <button type="submit" class="btn bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+            {{ isEditMode ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="btn bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" (click)="closePopup()">
+            Cancel
+          </button>
+          </form>
+        </div>
+    </div>
+</div>
+
+

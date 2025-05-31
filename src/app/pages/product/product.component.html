@@ -1,0 +1,95 @@
+
+<div class="products-container max-w-4xl mx-auto p-6">
+    <div class="header mb-6 flex justify-between items-center">
+      <h2 class="text-2xl font-semibold text-gray-800">Products</h2>
+      <div class="flex space-x-4">
+        <button 
+          class="btn bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          (click)="openPopup()">Add Product</button>
+        <button 
+          class="btn bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+          (click)="goBack()">Back</button>
+      </div>
+    </div>
+  
+
+    <div class="product-list mb-6" *ngIf="products.length > 0">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Product List</h3>
+      <table class="min-w-full table-auto border-collapse border border-gray-300">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 border border-gray-300 text-left">Product Name</th>
+            <th class="px-4 py-2 border border-gray-300 text-left">Price</th>
+            <th class="px-4 py-2 border border-gray-300 text-left">Category</th>
+            <th class="px-4 py-2 border border-gray-300 text-left">Description</th>
+            <th class="px-4 py-2 border border-gray-300 text-left">Image</th>
+            <th class="px-4 py-2 border border-gray-300 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products; let i = index" class="hover:bg-gray-50">
+            <td class="px-4 py-2 border border-gray-300">{{ product.name }}</td>
+            <td class="px-4 py-2 border border-gray-300">{{ product.unit_price | currency }}</td>
+            <td class="px-4 py-2 border border-gray-300">{{ getCategoryNameById(product.product_category_id) }}</td>
+            <td class="px-4 py-2 border border-gray-300">{{ product.description }}</td>
+            <td class="px-4 py-2 border border-gray-300">
+              <img *ngIf="product.picture_url" [src]="product.picture_url" alt="Product Image" class="h-10">
+            </td>
+            <td class="px-4 py-2 border border-gray-300">
+              <button class="text-blue-500 hover:underline" (click)="openEditPopup(i)">Edit</button>
+              <button class="text-red-500 hover:underline ml-2" (click)="deleteProduct(i)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="showPopup" class="popup fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+      <div class="popup-content bg-white rounded-lg p-6 w-96"style="width: 80vh; overflow-y: auto;">
+        <h3 class="text-xl font-semibold mb-4">{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h3>
+        <form (ngSubmit)="isEditMode ? updateProduct() : addProduct()">
+          <div class="mb-4">
+            <label for="productName" class="block text-gray-700">Product Name</label>
+            <input type="text" id="productName" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentProduct.name" name="productName" required>
+          </div>
+          <div class="mb-4">
+            <label for="price" class="block text-gray-700">Price</label>
+            <input type="number" id="price" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentProduct.unit_price" name="price" required>
+          </div>
+          <div class="mb-4">
+            <label for="category" class="block text-gray-700">Category</label>
+            <select id="category" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentProduct.product_category_id" name="category" required>
+              <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+            </select>
+            <button type="button" class="text-blue-500 mt-2 underline" (click)="showAddCategory = !showAddCategory">+ Add New Category</button>
+          </div>
+          <div class="mb-4">
+            <label for="description" class="block text-gray-700">Description</label>
+            <textarea id="description" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentProduct.description" name="description"></textarea>
+          </div>
+          
+        
+          <div *ngIf="showAddCategory" class="mb-4">
+            <h4 class="text-lg font-semibold text-gray-700 mb-2">Add New Category</h4>
+            <input type="text" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="newCategoryName" placeholder="Category Name" name="categoryName">
+            <button type="button" class="btn bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 mt-2" (click)="addCategory()">Save Category</button>
+          </div>
+  
+          <div class="mb-4">
+              
+            <label for="image" class="block text-gray-700">Image</label>
+            <input type="file" id="image" class="w-full p-2 border border-gray-300 rounded" (change)="onImageUpload($event)">
+          </div>
+          <div class="flex justify-between items-center">
+            <button type="submit" class="btn bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+              {{ isEditMode ? 'Update' : 'Add' }}
+            </button>
+            <button type="button" class="btn bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" (click)="closePopup()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- <div>defkfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</div> -->

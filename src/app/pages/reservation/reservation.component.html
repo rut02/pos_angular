@@ -1,0 +1,66 @@
+<!-- reservation.component.html -->
+<div class="flex flex-col justify-start w-full items-center p-4">
+  <div class="w-full max-w-6xl">
+    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Available Tables</h2>
+
+    <!-- กริดแสดงโต๊ะ -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div *ngFor="let table of tables" (click)="openReservationModal(table)"
+        class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 border border-gray-200">
+        <h3 class="text-lg font-medium text-center text-gray-700">{{ table.name }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับการจอง -->
+  <div *ngIf="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+      <!-- หัวข้อ Modal -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Reserve {{ selectedTable?.name }}</h3>
+        <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+      </div>
+
+      <!-- ฟอร์มสำหรับการจอง -->
+      <form (ngSubmit)="addReservation()" #reservationForm="ngForm">
+        <!-- ชื่อลูกค้า -->
+        <div class="mb-4">
+          <label for="name-input" class="block mb-2 font-medium text-gray-900">Customer Name</label>
+          <input type="text" id="name-input" placeholder="Enter your name"
+            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            [(ngModel)]="reservation.customer_name" name="customer_name" required>
+          <!-- แสดงข้อความแจ้งเตือนหากไม่กรอกชื่อ -->
+          <div *ngIf="reservationForm.submitted && reservationForm.controls['customer_name']?.errors?.['required']"
+            class="text-red-500 text-sm mt-1">
+            Customer Name is required.
+          </div>
+        </div>
+
+        <!-- วันที่และเวลา -->
+        <div class="mb-6">
+          <label for="datetime-input" class="block mb-2 font-medium text-gray-900">Date & Time</label>
+          <input type="datetime-local" id="datetime-input"
+            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            [(ngModel)]="reservation.reservation_date" name="reservation_date" required>
+          <!-- แสดงข้อความแจ้งเตือนหากไม่เลือกวันที่และเวลา -->
+          <div *ngIf="reservationForm.submitted && reservationForm.controls['reservation_date']?.errors?.['required']"
+            class="text-red-500 text-sm mt-1">
+            Date & Time is required.
+          </div>
+        </div>
+
+        <!-- ปุ่มในฟอร์ม -->
+        <div class="flex justify-end gap-4">
+          <button type="button" (click)="closeModal()"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="reservationForm.invalid"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-green-300">
+            Confirm Reservation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

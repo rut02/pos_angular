@@ -1,0 +1,180 @@
+<div class="flex flex-col justify-start w-full items-center p-4">
+  <div class="w-full max-w-6xl">
+    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Bill List</h2>
+
+    <!-- ตารางแสดงรายการบิล -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="w-full text-left">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-4 font-semibold text-gray-700">Bill No</th>
+            <th class="p-4 font-semibold text-gray-700">Table</th>
+            <th class="p-4 font-semibold text-gray-700">Customer Name</th>
+            <th class="p-4 font-semibold text-gray-700">Date</th>
+            <th class="p-4 font-semibold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bill of bills"
+              (click)="openDetailsModal(bill)"
+              class="border-t hover:bg-gray-50 cursor-pointer">
+            <td class="p-4">{{ bill.doc_no }}</td>
+            <td class="p-4">{{ bill.table_name }}</td>
+            <td class="p-4">{{ bill.customer_name }}</td>
+            <td class="p-4">{{ bill.doc_date | date:'medium' }}</td>
+            <td class="p-4 space-x-2">
+              <button (click)="openDetailsModal(bill); $event.stopPropagation()"
+                      class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      [attr.aria-label]="'View details for bill ' + bill.doc_no">
+                View Details
+              </button>
+              <button (click)="goToOrder(bill.id); $event.stopPropagation()"
+                      class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      [attr.aria-label]="'Go to order for bill ' + bill.doc_no">
+                Order
+              </button>
+              <button (click)="openCheckBillModal(bill); $event.stopPropagation()"
+                      class="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                      [attr.aria-label]="'Check bill ' + bill.doc_no"
+                      [disabled]="bill.status_master_id === 3">
+                Check Bill
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal สำหรับแสดงรายละเอียดบิล -->
+    <div *ngIf="showDetailsModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-800">Bill Details - {{ selectedBill?.doc_no }}</h3>
+          <button (click)="closeDetailsModal()" 
+                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  aria-label="Close bill details">×</button>
+        </div>
+        <div *ngIf="selectedBill">
+          <p><strong>Bill No:</strong> {{ selectedBill.doc_no }}</p>
+          <p><strong>Table:</strong> {{ selectedBill.table_name }}</p>
+          <p><strong>Customer Name:</strong> {{ selectedBill.customer_name }}</p>
+          <p><strong>Date:</strong> {{ selectedBill.doc_date | date:'medium' }}</p>
+          <p><strong>Total Price:</strong> {{ selectedBill.total_price | currency:'THB' }}</p>
+          <p><strong>Discount:</strong> {{ selectedBill.discount | currency:'THB' }}</p>
+          <p><strong>Paid:</strong> {{ selectedBill.get_paid | currency:'THB' }}</p>
+          <p><strong>Change:</strong> {{ selectedBill.change | currency:'THB' }}</p>
+          <p><strong>Status ID:</strong> {{ selectedBill.status_master_id }}</p>
+          <p><strong>Reservation ID:</strong> {{ selectedBill.reservation_id }}</p>
+          <p><strong>Created At:</strong> {{ selectedBill.created_at | date:'medium' }}</p>
+          <div class="mt-4" *ngIf="selectedBill.genders?.length">
+            <h4 class="text-lg font-medium mb-2">Genders</h4>
+            <ul class="list-disc pl-5">
+              <li *ngFor="let gender of selectedBill.genders">
+                {{ gender.gender }}: {{ gender.amount }}
+              </li>
+            </ul>
+          </div>
+          <div class="mt-4" *ngIf="selectedBill.age_ranges?.length">
+            <h4 class="text-lg font-medium mb-2">Age Ranges</h4>
+            <ul class="list-disc pl-5">
+              <li *ngFor="let ageRange of selectedBill.age_ranges">
+                {{ ageRange.age_range }}: {{ ageRange.amount }}
+              </li>
+            </ul>
+          </div>
+          <div class="mt-4" *ngIf="selectedBill.order_items?.length">
+            <h4 class="text-lg font-medium mb-2">Order Items</h4>
+            <ul class="list-disc pl-5">
+              <li *ngFor="let item of selectedBill.order_items">
+                {{ item.name }}: {{ item.unit_price | currency:'THB' }} x {{ item.amount }} = {{ item.total | currency:'THB' }}
+              </li>
+            </ul>
+          </div>
+          <div class="mt-4" *ngIf="!selectedBill.order_items?.length">
+            <p class="text-gray-600">No order items found for this bill.</p>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4 space-x-2">
+          <button (click)="goToOrder(selectedBill.id)"
+                  class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+            Order
+          </button>
+          <button (click)="openCheckBillModal(selectedBill)"
+                  class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                  [disabled]="selectedBill.status_master_id === 3">
+            Check Bill
+          </button>
+          <button (click)="closeDetailsModal()"
+                  class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal สำหรับเช็คบิล -->
+    <div *ngIf="showCheckBillModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-800">Check Bill - {{ selectedBill?.doc_no }}</h3>
+          <button (click)="closeCheckBillModal()" 
+                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  aria-label="Close check bill">×</button>
+        </div>
+        <div *ngIf="selectedBill">
+          <div class="mt-4" *ngIf="selectedBill.order_items?.length">
+            <h4 class="text-lg font-medium mb-2">Order Items</h4>
+            <ul class="list-disc pl-5">
+              <li *ngFor="let item of selectedBill.order_items">
+                {{ item.name }}: {{ item.unit_price | currency:'THB' }} x {{ item.amount }} = {{ item.total | currency:'THB' }}
+              </li>
+            </ul>
+          </div>
+          <p><strong>Total Price:</strong> {{ selectedBill.total_price | currency:'THB' }}</p>
+          <div class="mt-4">
+            <label for="member-number" class="block mb-2 font-medium text-gray-900">Member Number</label>
+            <input
+              type="text"
+              id="member-number"
+              placeholder="Enter member number"
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [(ngModel)]="memberNumber"
+              name="member_number"
+              required>
+            <div *ngIf="memberNumber === '' && submitted" class="text-red-500 text-sm mt-1">
+              Member number is required.
+            </div>
+          </div>
+          <div class="mt-4">
+            <label for="payment-amount" class="block mb-2 font-medium text-gray-900">Payment Amount</label>
+            <input
+              type="number"
+              id="payment-amount"
+              placeholder="Enter payment amount"
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [(ngModel)]="getPaid"
+              name="get_paid"
+              min="0"
+              required>
+            <div *ngIf="submitted && (getPaid === null || getPaid < selectedBill.total_price)" class="text-red-500 text-sm mt-1">
+              Payment amount must be greater than or equal to total price ({{ selectedBill.total_price | currency:'THB' }}).
+            </div>
+          </div>
+          <div class="flex justify-end mt-4 space-x-2">
+            <button (click)="closeCheckBillModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+              Cancel
+            </button>
+            <button (click)="confirmPayment()"
+                    class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                    [disabled]="!memberNumber || !isPaymentValid()">
+              Confirm Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

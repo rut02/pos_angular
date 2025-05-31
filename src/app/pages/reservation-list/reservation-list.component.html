@@ -1,0 +1,227 @@
+<div class="flex flex-col justify-start w-full items-center p-4">
+  <div class="w-full max-w-6xl">
+    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Reservation List</h2>
+
+    <!-- ตารางแสดงรายการจอง -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="w-full text-left">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-4 font-semibold text-gray-700">Table</th>
+            <th class="p-4 font-semibold text-gray-700">Customer Name</th>
+            <th class="p-4 font-semibold text-gray-700">Date & Time</th>
+            <th class="p-4 font-semibold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reservation of reservations"
+              (click)="openDetailsModal(reservation)"
+              class="border-t hover:bg-gray-50 cursor-pointer">
+            <td class="p-4">{{ reservation.table_name }}</td>
+            <td class="p-4">{{ reservation.customer_name }}</td>
+            <td class="p-4">{{ reservation.reservation_date | date:'medium' }}</td>
+            <td class="p-4 flex gap-2">
+              <button (click)="openBillConfirmModal(reservation); $event.stopPropagation()"
+                      class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                Open Bill
+              </button>
+              <button (click)="openCancelConfirmModal(reservation); $event.stopPropagation()"
+                      class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                Cancel Reservation
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal สำหรับแสดงรายละเอียดการจอง -->
+    <div *ngIf="showDetailsModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-800">Reservation Details</h3>
+          <button (click)="closeDetailsModal()" 
+                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
+        </div>
+        <div *ngIf="selectedReservation">
+          <p><strong>Table:</strong> {{ selectedReservation.table_name }}</p>
+          <p><strong>Customer Name:</strong> {{ selectedReservation.customer_name }}</p>
+          <p><strong>Date & Time:</strong> {{ selectedReservation.reservation_date | date:'medium' }}</p>
+          <p><strong>Staff ID:</strong> {{ selectedReservation.staff_id }}</p>
+        </div>
+        <div class="flex justify-end mt-4">
+          <button (click)="closeDetailsModal()"
+                  class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal สำหรับยืนยันการเปิดบิล -->
+    <div *ngIf="showBillConfirmModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-lg max-h-screen overflow-y-auto shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-800">Open Bill for {{ selectedReservation?.customer_name }}</h3>
+          <button (click)="closeBillConfirmModal()" 
+                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
+        </div>
+        <form (ngSubmit)="confirmBill()" #billForm="ngForm">
+          <!-- Field for Table -->
+          <div class="mb-4">
+            <label for="table-input" class="block mb-2 text-2xl font-medium text-gray-900">Table</label>
+            <input
+              type="text"
+              id="table-input"
+              class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+              [value]="selectedReservation?.table_name"
+              disabled
+            />
+            <input type="hidden" name="table_id" [(ngModel)]="bill.table_id">
+          </div>
+
+          <!-- Field for Name -->
+          <div class="mb-4">
+            <label for="name-input" class="block mb-2 text-2xl font-medium text-gray-900">Name</label>
+            <input
+              type="text"
+              id="name-input"
+              class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+              [value]="selectedReservation?.customer_name"
+              disabled
+            />
+            <input type="hidden" name="customer_name" [(ngModel)]="bill.customer_name">
+          </div>
+
+          <!-- Gender Section -->
+          <div class="mb-4">
+            <h4 class="text-lg font-medium mb-2">Gender</h4>
+            <div *ngFor="let entry of genderEntries; let i = index" class="mb-2">
+              <div class="flex items-center gap-2">
+                <select
+                  id="gender{{i}}"
+                  [(ngModel)]="entry.selectedGender"
+                  name="gender{{i}}"
+                  class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                  required
+                >
+                  <option *ngFor="let g of genders" [ngValue]="g">{{ g.name }}</option>
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="entry.selectedGenderAmount"
+                  name="genderAmount{{i}}"
+                  class="w-16 text-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                  placeholder="Qty"
+                  required
+                />
+                <button
+                  *ngIf="genderEntries.length > 1"
+                  type="button"
+                  (click)="removeGenderEntry(i)"
+                  class="text-red-500 hover:text-red-700 text-lg font-bold"
+                  aria-label="Remove gender entry"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="addGenderEntry()"
+              class="w-full mt-2 relative inline-flex items-center justify-center p-2 text-sm font-medium text-gray-900 rounded-lg bg-gray-500 text-white hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300"
+            >
+              Add Gender
+            </button>
+          </div>
+
+          <!-- Age Section -->
+          <div class="mb-4">
+            <h4 class="text-lg font-medium mb-2">Age</h4>
+            <div *ngFor="let entry of ageRangeEntries; let i = index" class="mb-2">
+              <div class="flex items-center gap-2">
+                <select
+                  id="ageRange{{i}}"
+                  [(ngModel)]="entry.selectedAgeRange"
+                  name="ageRange{{i}}"
+                  class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                  required
+                >
+                  <option *ngFor="let ageRange of ageRanges" [ngValue]="ageRange">{{ ageRange.name }}</option>
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="entry.selectedAgeRangeAmount"
+                  name="ageRangeAmount{{i}}"
+                  class="w-16 text-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                  placeholder="Qty"
+                  required
+                />
+                <button
+                  *ngIf="ageRangeEntries.length > 1"
+                  type="button"
+                  (click)="removeAgeRangeEntry(i)"
+                  class="text-red-500 hover:text-red-700 text-lg font-bold"
+                  aria-label="Remove age range entry"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="addAgeRangeEntry()"
+              class="w-full mt-2 relative inline-flex items-center justify-center p-2 text-sm font-medium text-gray-900 rounded-lg bg-gray-500 text-white hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300"
+            >
+              Add Age
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex justify-end gap-4">
+            <button
+              type="button"
+              (click)="closeBillConfirmModal()"
+              class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            >
+              Confirm
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal สำหรับยืนยันการยกเลิกการจอง -->
+    <div *ngIf="showCancelConfirmModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-800">Confirm Cancel Reservation</h3>
+          <button (click)="closeCancelConfirmModal()" 
+                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
+        </div>
+        <p class="mb-4">Are you sure you want to cancel the reservation for {{ selectedReservation?.customer_name }} at {{ selectedReservation?.table_name }}?</p>
+        <div class="flex justify-end gap-4">
+          <button (click)="closeCancelConfirmModal()"
+                  class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+            Cancel
+          </button>
+          <button (click)="cancelReservation()"
+                  class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
