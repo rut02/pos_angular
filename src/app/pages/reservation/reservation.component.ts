@@ -1,5 +1,3 @@
-// reservation.component.ts
-// Remains exactly the same as previous version
 import { Component, ViewChild } from '@angular/core';
 import { ReservationService } from '../../services/reservation.service';
 import { TableService } from '../../services/table.service';
@@ -10,7 +8,6 @@ import { FormsModule, NgForm } from '@angular/forms';
   selector: 'app-reservation',
   imports: [CommonModule, FormsModule],
   templateUrl: './reservation.component.html',
-  // No styleUrl needed since we're using Tailwind classes inline
 })
 export class ReservationComponent {
   @ViewChild('reservationForm') reservationForm!: NgForm;
@@ -23,15 +20,19 @@ export class ReservationComponent {
   constructor(
     private reservationService: ReservationService,
     private tableService: TableService
-  ) { }
+  ) {}
 
-  ngOnInit(): void {    
-    this.tableService.getAvaliableTables().subscribe((data) => {
-      this.tables = data;
+  ngOnInit(): void {
+    this.tableService.getTables().subscribe((data) => {
+      this.tables = data.map((table: any) => ({
+        ...table,
+        isAvailable: table.status_name === 'Available', // กำหนดว่าโต๊ะว่างเมื่อ status_name เป็น "Available"
+      }));
     });
   }
 
   openReservationModal(table: any): void {
+    if (!table.isAvailable) return; // ไม่เปิด Modal ถ้าโต๊ะไม่ว่าง
     this.selectedTable = table;
     this.reservation.table_id = table.id;
     this.showModal = true;
@@ -43,11 +44,9 @@ export class ReservationComponent {
     this.selectedTable = null;
   }
 
-    addReservation(): void {
-    
+  addReservation(): void {
     if (this.reservationForm.invalid) {
-      
-      Object.keys(this.reservationForm.controls).forEach(field => {
+      Object.keys(this.reservationForm.controls).forEach((field) => {
         const control = this.reservationForm.controls[field];
         control.markAsTouched({ onlySelf: true });
       });
@@ -63,6 +62,13 @@ export class ReservationComponent {
     this.reservationService.addReservation(formData).subscribe(
       (data) => {
         this.closeModal();
+        // อัปเดตสถานะโต๊ะหลังจากจองสำเร็จ
+        this.tableService.getTables().subscribe((data) => {
+          this.tables = data.map((table: any) => ({
+            ...table,
+            isAvailable: table.status_name === 'Available',
+          }));
+        });
       },
       (error) => {
         console.error('Error adding reservation', error);

@@ -35,7 +35,10 @@ export class BillComponent implements OnInit {
 
   ngOnInit(): void {
     this.tableService.getTables().subscribe((data) => {
-      this.tables = data;
+      this.tables = data.map((table: any) => ({
+        ...table,
+        isAvailable: table.status_name === 'Available', // กำหนดว่าโต๊ะว่างเมื่อ status_name เป็น "Available"
+      }));
     });
     this.getGenders();
     this.getAgeRanges();
@@ -60,7 +63,10 @@ export class BillComponent implements OnInit {
   }
 
   openBillModal(table: any): void {
-    // รอให้ genders และ ageRanges พร้อมก่อนเปิด Modal
+    if (!table.isAvailable) {
+      Swal.fire('Error', `Table ${table.name} is not available.`, 'error');
+      return;
+    }
     if (this.genders.length === 0 || this.ageRanges.length === 0) {
       Swal.fire('Loading', 'Please wait while loading data...', 'info');
       return;
@@ -80,7 +86,7 @@ export class BillComponent implements OnInit {
 
   addBill(): void {
     if (this.billForm.invalid) {
-      Object.keys(this.billForm.controls).forEach(field => {
+      Object.keys(this.billForm.controls).forEach((field) => {
         const control = this.billForm.controls[field];
         control.markAsTouched({ onlySelf: true });
       });
@@ -89,7 +95,7 @@ export class BillComponent implements OnInit {
     }
 
     const formData = new FormData();
-    formData.append('bill[bill_status_id]', '2');
+    formData.append('bill[bill_status_id]', '2'); // สมมติค่าเริ่มต้น
     formData.append('bill[customer_name]', this.bill.customer_name);
     formData.append('bill[table_id]', this.bill.table_id.toString());
 
@@ -107,6 +113,13 @@ export class BillComponent implements OnInit {
       () => {
         this.closeModal();
         Swal.fire('Success', 'Bill created successfully!', 'success');
+        // อัปเดตสถานะโต๊ะหลังสร้างบิล
+        this.tableService.getTables().subscribe((data) => {
+          this.tables = data.map((table: any) => ({
+            ...table,
+            isAvailable: table.status_name === 'Available',
+          }));
+        });
       },
       (error: HttpErrorResponse) => {
         Swal.fire('Error', `Failed to create bill: ${error.message}`, 'error');
@@ -119,7 +132,7 @@ export class BillComponent implements OnInit {
     if (this.genders.length > 0) {
       this.genderEntries.push({
         selectedGender: this.genders[0],
-        selectedGenderAmount: 1
+        selectedGenderAmount: 1,
       });
     }
   }
@@ -128,7 +141,7 @@ export class BillComponent implements OnInit {
     if (this.ageRanges.length > 0) {
       this.ageRangeEntries.push({
         selectedAgeRange: this.ageRanges[0],
-        selectedAgeRangeAmount: 1
+        selectedAgeRangeAmount: 1,
       });
     }
   }

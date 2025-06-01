@@ -1,13 +1,31 @@
 <div class="flex flex-col justify-start w-full items-center p-4">
   <div class="w-full max-w-6xl">
-    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Available Tables</h2>
+    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Tables</h2>
 
     <!-- กริดแสดงโต๊ะ -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div *ngFor="let table of tables" (click)="openBillModal(table)"
-        class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-200 border border-gray-200">
+      <div
+        *ngFor="let table of tables"
+        (click)="openBillModal(table)"
+        [class.opacity-50]="!table.isAvailable"
+        [class.cursor-not-allowed]="!table.isAvailable"
+        class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200"
+        [ngClass]="{
+          'cursor-pointer': table.isAvailable,
+          'opacity-50 cursor-not-allowed': !table.isAvailable
+        }"
+      >
         <h3 class="text-lg font-medium text-center text-gray-700">{{ table.name }}</h3>
         <p class="text-sm text-center text-gray-500">{{ table.status_name }}</p>
+        <p
+          class="text-sm text-center"
+          [ngClass]="{
+            'text-green-500': table.isAvailable,
+            'text-red-500': !table.isAvailable
+          }"
+        >
+          {{ table.isAvailable ? 'Available' : 'Not Available' }}
+        </p>
       </div>
     </div>
   </div>
@@ -18,8 +36,13 @@
       <!-- หัวข้อ Modal -->
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-xl font-semibold text-gray-800">Create Bill for {{ selectedTable?.name }}</h3>
-        <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                [attr.aria-label]="'Close bill modal'">×</button>
+        <button
+          (click)="closeModal()"
+          class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+          [attr.aria-label]="'Close bill modal'"
+        >
+          ×
+        </button>
       </div>
 
       <!-- ฟอร์มสำหรับสร้างบิล -->
@@ -32,7 +55,8 @@
             class="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
             [value]="selectedTable?.name + ' (' + selectedTable?.status_name + ')'"
             disabled
-            readonly>
+            readonly
+          />
         </div>
 
         <!-- ชื่อลูกค้า -->
@@ -45,9 +69,12 @@
             class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             [(ngModel)]="bill.customer_name"
             name="customer_name"
-            required>
-          <div *ngIf="billForm.submitted && billForm.controls['customer_name']?.errors?.['required']"
-               class="text-red-500 text-sm mt-1">
+            required
+          />
+          <div
+            *ngIf="billForm.submitted && billForm.controls['customer_name']?.errors?.['required']"
+            class="text-red-500 text-sm mt-1"
+          >
             Customer Name is required.
           </div>
         </div>
@@ -57,39 +84,44 @@
           <h4 class="text-lg font-medium mb-2">Gender</h4>
           <div *ngFor="let entry of genderEntries; let i = index" class="mb-2 flex items-center gap-2">
             <select
-              id="gender{{i}}"
+              id="gender{{ i }}"
               [(ngModel)]="entry.selectedGender"
-              name="gender{{i}}"
+              name="gender{{ i }}"
               class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
-              required>
-              <option *ngFor="let g of genders" [ngValue]="g">{{ g.name }}</option>
+              required
+            >
+              <option *ngFor="let g of genders" [ngValue]="g">{{ g.gender }}</option>
             </select>
             <input
               type="number"
               min="1"
               [(ngModel)]="entry.selectedGenderAmount"
-              name="genderAmount{{i}}"
+              name="genderAmount{{ i }}"
               class="w-16 text-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
               placeholder="Qty"
-              required>
-            <button *ngIf="genderEntries.length > 1" type="button" (click)="removeGenderEntry(i)"
-                    class="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    [attr.aria-label]="'Remove gender entry'">X</button>
+              required
+            />
+            <button
+              *ngIf="genderEntries.length > 1"
+              type="button"
+              (click)="removeGenderEntry(i)"
+              class="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              [attr.aria-label]="'Remove gender entry'"
+            >
+              X
+            </button>
           </div>
           <ng-container *ngIf="billForm.submitted && genderEntries.length > 0">
             <div *ngFor="let entry of genderEntries; let idx = index" class="text-red-500 text-sm mt-1">
-              <div *ngIf="billForm.controls['gender' + idx]?.errors?.['required']">
-                Gender selection is required.
-              </div>
-              <div *ngIf="billForm.controls['genderAmount' + idx]?.errors?.['required']">
-                Quantity is required.
-              </div>
+              <div *ngIf="billForm.controls['gender' + idx]?.errors?.['required']">Gender selection is required.</div>
+              <div *ngIf="billForm.controls['genderAmount' + idx]?.errors?.['required']">Quantity is required.</div>
             </div>
           </ng-container>
           <button
             type="button"
             (click)="addGenderEntry()"
-            class="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+            class="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
             Add Gender
           </button>
         </div>
@@ -99,51 +131,62 @@
           <h4 class="text-lg font-medium mb-2">Age</h4>
           <div *ngFor="let entry of ageRangeEntries; let i = index" class="mb-2 flex items-center gap-2">
             <select
-              id="ageRange{{i}}"
+              id="ageRange{{ i }}"
               [(ngModel)]="entry.selectedAgeRange"
-              name="ageRange{{i}}"
+              name="ageRange{{ i }}"
               class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
-              required>
-              <option *ngFor="let ageRange of ageRanges" [ngValue]="ageRange">{{ ageRange.name }}</option>
+              required
+            >
+              <option *ngFor="let ageRange of ageRanges" [ngValue]="ageRange">{{ ageRange.age_range }}</option>
             </select>
             <input
               type="number"
               min="1"
               [(ngModel)]="entry.selectedAgeRangeAmount"
-              name="ageRangeAmount{{i}}"
+              name="ageRangeAmount{{ i }}"
               class="w-16 text-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
               placeholder="Qty"
-              required>
-            <button *ngIf="ageRangeEntries.length > 1" type="button" (click)="removeAgeRangeEntry(i)"
-                    class="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    [attr.aria-label]="'Remove age entry'">X</button>
+              required
+            />
+            <button
+              *ngIf="ageRangeEntries.length > 1"
+              type="button"
+              (click)="removeAgeRangeEntry(i)"
+              class="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              [attr.aria-label]="'Remove age entry'"
+            >
+              X
+            </button>
           </div>
           <ng-container *ngIf="billForm.submitted && ageRangeEntries.length > 0">
             <div *ngFor="let entry of ageRangeEntries; let idx = index" class="text-red-500 text-sm mt-1">
-              <div *ngIf="billForm.controls['ageRange' + idx]?.errors?.['required']">
-                Age range selection is required.
-              </div>
-              <div *ngIf="billForm.controls['ageRangeAmount' + idx]?.errors?.['required']">
-                Quantity is required.
-              </div>
+              <div *ngIf="billForm.controls['ageRange' + idx]?.errors?.['required']">Age range selection is required.</div>
+              <div *ngIf="billForm.controls['ageRangeAmount' + idx]?.errors?.['required']">Quantity is required.</div>
             </div>
           </ng-container>
           <button
             type="button"
             (click)="addAgeRangeEntry()"
-            class="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+            class="w-full mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
             Add Age
           </button>
         </div>
 
         <!-- ปุ่มในฟอร์ม -->
         <div class="flex justify-end gap-4">
-          <button type="button" (click)="closeModal()"
-            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
+          >
             Cancel
           </button>
-          <button type="submit" [disabled]="billForm.invalid"
-            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-green-300">
+          <button
+            type="submit"
+            [disabled]="billForm.invalid"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-green-300"
+          >
             Create Bill
           </button>
         </div>

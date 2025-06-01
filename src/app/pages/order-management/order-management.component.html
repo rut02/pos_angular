@@ -82,8 +82,8 @@
             <h4 class="text-lg font-medium mb-2">Order Items</h4>
             <ul class="list-disc pl-5">
               <li *ngFor="let item of selectedOrder.order_items">
-                {{ item.name }}: {{ item.unit_price | currency: 'THB' }} x {{ item.amount }} =
-                {{ item.total | currency: 'THB' }}
+                {{ item.name }}: {{ item.unit_price | currency: 'THB' }} x {{ item.amount }}
+                {{ item.total_price | currency: 'THB' }}
               </li>
             </ul>
           </div>

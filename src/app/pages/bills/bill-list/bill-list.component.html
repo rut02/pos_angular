@@ -2,6 +2,21 @@
   <div class="w-full max-w-6xl">
     <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800">Bill List</h2>
 
+    <!-- ตัวกรองสถานะ -->
+    <div class="mb-4 flex items-center justify-end">
+      <label for="status-filter" class="mr-2 font-medium text-gray-700">Filter by Status:</label>
+      <select
+        id="status-filter"
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="onStatusChange()"
+        class="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+      >
+        <option *ngFor="let status of statuses" [value]="status.name">
+          {{ status.name }}
+        </option>
+      </select>
+    </div>
+
     <!-- ตารางแสดงรายการบิล -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
       <table class="w-full text-left">
@@ -15,9 +30,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let bill of bills"
-              (click)="openDetailsModal(bill)"
-              class="border-t hover:bg-gray-50 cursor-pointer">
+          <tr *ngFor="let bill of filteredBills" (click)="openDetailsModal(bill)" class="border-t hover:bg-gray-50 cursor-pointer">
             <td class="p-4">{{ bill.doc_no }}</td>
             <td class="p-4">{{ bill.table_name }}</td>
             <td class="p-4">{{ bill.customer_name }}</td>
@@ -28,17 +41,12 @@
                       [attr.aria-label]="'View details for bill ' + bill.doc_no">
                 View Details
               </button>
-              <button (click)="goToOrder(bill.id); $event.stopPropagation()"
-                      class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                      [attr.aria-label]="'Go to order for bill ' + bill.doc_no">
-                Order
-              </button>
-              <button (click)="openCheckBillModal(bill); $event.stopPropagation()"
-                      class="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-                      [attr.aria-label]="'Check bill ' + bill.doc_no"
-                      [disabled]="bill.status_master_id === 3">
-                Check Bill
-              </button>
+          <button *ngIf="bill.status_master.name !== 'Paid'" (click)="goToOrder(bill.id); $event.stopPropagation()"
+          class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          [attr.aria-label]="'Go to order for bill ' + bill.doc_no">
+    Order
+  </button>
+              <!-- ลบปุ่ม Check Bill ออกจากตาราง -->
             </td>
           </tr>
         </tbody>
@@ -46,63 +54,121 @@
     </div>
 
     <!-- Modal สำหรับแสดงรายละเอียดบิล -->
-    <div *ngIf="showDetailsModal" 
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
+    <div *ngIf="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold text-gray-800">Bill Details - {{ selectedBill?.doc_no }}</h3>
-          <button (click)="closeDetailsModal()" 
-                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+          <h3 class="text-xl font-semibold text-gray-800">Receipt - {{ selectedBill?.doc_no }}</h3>
+          <button (click)="closeDetailsModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
                   aria-label="Close bill details">×</button>
         </div>
-        <div *ngIf="selectedBill">
-          <p><strong>Bill No:</strong> {{ selectedBill.doc_no }}</p>
-          <p><strong>Table:</strong> {{ selectedBill.table_name }}</p>
-          <p><strong>Customer Name:</strong> {{ selectedBill.customer_name }}</p>
-          <p><strong>Date:</strong> {{ selectedBill.doc_date | date:'medium' }}</p>
-          <p><strong>Total Price:</strong> {{ selectedBill.total_price | currency:'THB' }}</p>
-          <p><strong>Discount:</strong> {{ selectedBill.discount | currency:'THB' }}</p>
-          <p><strong>Paid:</strong> {{ selectedBill.get_paid | currency:'THB' }}</p>
-          <p><strong>Change:</strong> {{ selectedBill.change | currency:'THB' }}</p>
-          <p><strong>Status ID:</strong> {{ selectedBill.status_master_id }}</p>
-          <p><strong>Reservation ID:</strong> {{ selectedBill.reservation_id }}</p>
-          <p><strong>Created At:</strong> {{ selectedBill.created_at | date:'medium' }}</p>
-          <div class="mt-4" *ngIf="selectedBill.genders?.length">
-            <h4 class="text-lg font-medium mb-2">Genders</h4>
+        <div *ngIf="selectedBill" class="text-gray-800">
+          <!-- หัวใบเสร็จ -->
+          <div class="text-center border-b pb-4 mb-4">
+            <p class="text-sm">Receipt #{{ selectedBill.doc_no }}</p>
+          </div>
+
+          <!-- รายละเอียดบิล -->
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span><strong>Table:</strong></span>
+              <span>{{ selectedBill.table_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span><strong>Customer:</strong></span>
+              <span>{{ selectedBill.customer_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span><strong>Date:</strong></span>
+              <span>{{ selectedBill.doc_date | date:'medium' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="selectedBill.payment_date">
+              <span><strong>Paid On:</strong></span>
+              <span>{{ selectedBill.payment_date | date:'medium' }}</span>
+            </div>
+          </div>
+
+          <!-- Genders และ Age Ranges -->
+          <div class="mt-4 text-sm" *ngIf="selectedBill.genders?.length">
+            <h4 class="font-medium mb-1">Genders</h4>
             <ul class="list-disc pl-5">
               <li *ngFor="let gender of selectedBill.genders">
                 {{ gender.gender }}: {{ gender.amount }}
               </li>
             </ul>
           </div>
-          <div class="mt-4" *ngIf="selectedBill.age_ranges?.length">
-            <h4 class="text-lg font-medium mb-2">Age Ranges</h4>
+          <div class="mt-4 text-sm" *ngIf="selectedBill.age_ranges?.length">
+            <h4 class="font-medium mb-1">Age Ranges</h4>
             <ul class="list-disc pl-5">
               <li *ngFor="let ageRange of selectedBill.age_ranges">
                 {{ ageRange.age_range }}: {{ ageRange.amount }}
               </li>
             </ul>
           </div>
-          <div class="mt-4" *ngIf="selectedBill.order_items?.length">
-            <h4 class="text-lg font-medium mb-2">Order Items</h4>
-            <ul class="list-disc pl-5">
-              <li *ngFor="let item of selectedBill.order_items">
-                {{ item.name }}: {{ item.unit_price | currency:'THB' }} x {{ item.amount }} = {{ item.total | currency:'THB' }}
-              </li>
-            </ul>
+
+          <!-- รายการสินค้า -->
+          <div class="mt-4 text-sm" *ngIf="selectedBill.order_items?.length">
+            <h4 class="font-medium mb-2">Items Ordered</h4>
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="border-b">
+                  <th class="text-left py-1">Item</th>
+                  <th class="text-right py-1">Qty</th>
+                  <th class="text-right py-1">Price</th>
+                  <th class="text-right py-1">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of selectedBill.order_items" class="border-b">
+                  <td class="py-1">{{ item.product.name }}</td>
+                  <td class="text-right py-1">{{ item.amount }}</td>
+                  <td class="text-right py-1">{{ item.unit_price | currency:'THB' }}</td>
+                  <td class="text-right py-1">{{ item.price | currency:'THB' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="mt-4" *ngIf="!selectedBill.order_items?.length">
-            <p class="text-gray-600">No order items found for this bill.</p>
+          <div class="mt-4 text-sm" *ngIf="!selectedBill.order_items?.length">
+            <p class="text-gray-600">No items ordered for this bill.</p>
+          </div>
+
+          <!-- สรุปยอด -->
+          <div class="mt-4 border-t pt-4 text-sm">
+            <div class="flex justify-between">
+              <span><strong>Subtotal:</strong></span>
+              <span>{{ selectedBill.total_price | currency:'THB' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="selectedBill.discount">
+              <span><strong>Discount:</strong></span>
+              <span>{{ selectedBill.discount | currency:'THB' }}</span>
+            </div>
+            <div class="flex justify-between font-bold">
+              <span>Total:</span>
+              <span>{{ (selectedBill.total_price - (selectedBill.discount || 0)) | currency:'THB' }}</span>
+            </div>
+            <div class="flex justify-between mt-2" *ngIf="selectedBill.get_paid">
+              <span><strong>Paid:</strong></span>
+              <span>{{ selectedBill.get_paid | currency:'THB' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="selectedBill.get_paid && selectedBill.change !== undefined">
+              <span><strong>Change:</strong></span>
+              <span>{{ selectedBill.change | currency:'THB' }}</span>
+            </div>
+          </div>
+
+          <!-- ท้ายใบเสร็จ -->
+          <div class="text-center mt-4 border-t pt-4 text-sm text-gray-600">
+            <p>Thank you for dining with us!</p>
+            <p>Come back soon!</p>
           </div>
         </div>
         <div class="flex justify-end mt-4 space-x-2">
-          <button (click)="goToOrder(selectedBill.id)"
+          <button *ngIf="selectedBill.status_master.name !== 'Paid'"  (click)="goToOrder(selectedBill.id)"
                   class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
             Order
           </button>
-          <button (click)="openCheckBillModal(selectedBill)"
-                  class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-                  [disabled]="selectedBill.status_master_id === 3">
+          <!-- ซ่อนปุ่ม Check Bill หากสถานะเป็น Paid -->
+          <button *ngIf="selectedBill.status_master.name !== 'Paid'" (click)="openCheckBillModal(selectedBill)"
+                  class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
             Check Bill
           </button>
           <button (click)="closeDetailsModal()"
@@ -114,13 +180,11 @@
     </div>
 
     <!-- Modal สำหรับเช็คบิล -->
-    <div *ngIf="showCheckBillModal" 
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div *ngIf="showCheckBillModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold text-gray-800">Check Bill - {{ selectedBill?.doc_no }}</h3>
-          <button (click)="closeCheckBillModal()" 
-                  class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+          <button (click)="closeCheckBillModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold"
                   aria-label="Close check bill">×</button>
         </div>
         <div *ngIf="selectedBill">
@@ -128,7 +192,7 @@
             <h4 class="text-lg font-medium mb-2">Order Items</h4>
             <ul class="list-disc pl-5">
               <li *ngFor="let item of selectedBill.order_items">
-                {{ item.name }}: {{ item.unit_price | currency:'THB' }} x {{ item.amount }} = {{ item.total | currency:'THB' }}
+                {{ item.product.name }}: {{ item.unit_price | currency:'THB' }} x {{ item.amount }} = {{ item.price | currency:'THB' }}
               </li>
             </ul>
           </div>

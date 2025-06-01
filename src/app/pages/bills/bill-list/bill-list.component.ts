@@ -15,7 +15,10 @@ import { OrderItemService } from '../../../services/order-item.service';
 })
 export class BillListComponent implements OnInit {
   bills: any[] = [];
+  filteredBills: any[] = []; // เพิ่มตัวแปรสำหรับบิลที่ถูกกรอง
   tables: any[] = [];
+  statuses: { id: number; name: string }[] = []; // เก็บสถานะทั้งหมด
+  selectedStatus: string = 'Opened'; // ค่าเริ่มต้นเป็น Opened
   showDetailsModal: boolean = false;
   showCheckBillModal: boolean = false;
   selectedBill: any = null;
@@ -39,20 +42,44 @@ export class BillListComponent implements OnInit {
 
     // ดึงข้อมูลบิล
     this.billService.getBills().subscribe((data) => {
-      this.bills = data.map((bill: { genders: string; age_ranges: string; }) => ({
+      this.bills = data.map((bill: { genders: string; age_ranges: string }) => ({
         ...bill,
         genders: bill.genders ? JSON.parse(bill.genders) : [],
-        age_ranges: bill.age_ranges ? JSON.parse(bill.age_ranges) : []
+        age_ranges: bill.age_ranges ? JSON.parse(bill.age_ranges) : [],
       }));
+
+      // ดึงสถานะทั้งหมดจากข้อมูลบิล
+      this.statuses = Array.from(
+        new Map(
+          this.bills.map((bill) => [
+            bill.status_master.id,
+            { id: bill.status_master.id, name: bill.status_master.name },
+          ])
+        ).values()
+      );
+
+      // กรองบิลตามสถานะเริ่มต้น (Opened)
+      this.filterBills();
     });
+  }
+
+  // ฟังก์ชันสำหรับกรองบิลตามสถานะ
+  filterBills(): void {
+    this.filteredBills = this.bills.filter(
+      (bill) => bill.status_master.name === this.selectedStatus
+    );
+  }
+
+  // เรียกเมื่อเปลี่ยนสถานะใน dropdown
+  onStatusChange(): void {
+    this.filterBills();
   }
 
   openDetailsModal(bill: any): void {
     this.selectedBill = bill;
-    // ดึง order items ตาม bill_id (สมมติว่า OrderService มีเมธอด getOrderItemsByBillId)
     this.orderItemService.getOrderItemByBillId(bill.id).subscribe(
       (orderItems) => {
-        this.selectedBill.order_items = orderItems; // เพิ่ม order_items เข้าไปใน selectedBill
+        this.selectedBill.order_items = orderItems;
         this.showDetailsModal = true;
       },
       (error) => {
@@ -60,7 +87,7 @@ export class BillListComponent implements OnInit {
         this.selectedBill.order_items = [
           { id: 1, name: 'Espresso', unit_price: 60, amount: 2, total: 120 },
           { id: 2, name: 'Croissant', unit_price: 40, amount: 3, total: 120 },
-          { id: 3, name: 'Orange Juice', unit_price: 50, amount: 1, total: 50 }
+          { id: 3, name: 'Orange Juice', unit_price: 50, amount: 1, total: 50 },
         ];
         this.showDetailsModal = true;
         console.warn('Mock order items used due to API error:', error);
@@ -129,29 +156,31 @@ export class BillListComponent implements OnInit {
       bill: {
         bill_id: this.selectedBill.id,
         c_card: this.memberNumber,
-        status_master_id: 6,
+        status_master_id: 6, // สถานะ Paid
         get_paid: this.getPaid,
-        payment_date: new Date().toISOString() // 06:06 PM +07, May 29, 2025
-      }
+        payment_date: new Date().toISOString(), // ใช้เวลาปัจจุบัน: 07:20 PM +07, May 31, 2025
+      },
     };
 
     Swal.fire({
       title: 'Processing...',
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
+      didOpen: () => Swal.showLoading(),
     });
 
     this.billService.updateBill(this.selectedBill.id, paymentData).subscribe(
       () => {
         Swal.fire('Success', 'Bill checked successfully!', 'success');
-        this.selectedBill.status_master_id = 3;
+        this.selectedBill.status_master_id = 6; // อัปเดตสถานะใน UI
+        this.selectedBill.status_master.name = 'Paid'; // อัปเดตชื่อสถานะใน UI
         this.closeCheckBillModal();
-        this.billService.getBills().subscribe(data => {
-          this.bills = data.map((bill: { genders: string; age_ranges: string; }) => ({
+        this.billService.getBills().subscribe((data) => {
+          this.bills = data.map((bill: { genders: string; age_ranges: string }) => ({
             ...bill,
             genders: bill.genders ? JSON.parse(bill.genders) : [],
-            age_ranges: bill.age_ranges ? JSON.parse(bill.age_ranges) : []
+            age_ranges: bill.age_ranges ? JSON.parse(bill.age_ranges) : [],
           }));
+          this.filterBills(); // กรองบิลใหม่หลังจากอัปเดต
         });
       },
       (error) => {

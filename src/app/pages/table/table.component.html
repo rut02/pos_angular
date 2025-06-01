@@ -47,11 +47,11 @@
     </table>
     <div *ngIf="showPopup" class="popup fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex justify-center items-center">
       <div class="popup-content bg-white rounded-lg p-6 w-96"style="width: 80vh; overflow-y: auto;">
-        <h3 class="text-xl font-semibold mb-4">{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h3>
+        <h3 class="text-xl font-semibold mb-4">{{ isEditMode ? 'Edit Table' : 'Add Table' }}</h3>
         <form (ngSubmit)="isEditMode ? updateTable() : addTable()">
           <div class="mb-4">
-            <label for="productName" class="block text-gray-700">Table Name</label>
-            <input type="text" id="productName" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentTable.name" name="tableName" required>
+            <label for="tableName" class="block text-gray-700">Table Name</label>
+            <input type="text" id="tableName" class="w-full p-2 border border-gray-300 rounded" [(ngModel)]="currentTable.name" name="tableName" required>
           </div>
           <div class="mb-4">
             <label for="price" class="block text-gray-700">
